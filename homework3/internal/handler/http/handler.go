@@ -4,18 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"homework3/internal/client"
+	"homework3/internal/domain"
+	"homework3/internal/usecase"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type Handler struct {
-	client *client.MovieClient
+	usecase          usecase.MovieUseCase
+	operationTimeout time.Duration
 }
 
-func NewHandler(c *client.MovieClient) *Handler {
-	return &Handler{client: c}
+func NewHandler(uc usecase.MovieUseCase, operationTimeout time.Duration) *Handler {
+	return &Handler{usecase: uc, operationTimeout: operationTimeout}
 }
 
 func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
@@ -29,13 +32,9 @@ func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid to parameter", http.StatusBadRequest)
 		return
 	}
-	if from < 1 || to < from {
-		http.Error(w, "expected 1 <= from <= to", http.StatusBadRequest)
-		return
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), h.client.OperationTimeout)
+	ctx, cancel := context.WithTimeout(r.Context(), h.operationTimeout)
 	defer cancel()
-	result, err := h.client.LoadMovies(ctx, int64(from), int64(to))
+	result, err := h.usecase.LoadMovies(ctx, from, to)
 	if err != nil {
 		writeUpstreamError(w, err)
 		return
@@ -61,9 +60,9 @@ func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) LastMovie(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), h.client.OperationTimeout)
+	ctx, cancel := context.WithTimeout(r.Context(), h.operationTimeout)
 	defer cancel()
-	movie, err := h.client.GetLastMovie(ctx)
+	movie, err := h.usecase.GetLastMovie(ctx)
 	if err != nil {
 		writeUpstreamError(w, err)
 		return
@@ -83,8 +82,10 @@ func writeUpstreamError(w http.ResponseWriter, err error) {
 		return
 	case errors.Is(err, context.DeadlineExceeded):
 		http.Error(w, "Movie service timed out", http.StatusGatewayTimeout)
-	case errors.Is(err, client.ErrNoMovies):
+	case errors.Is(err, domain.ErrNoMovies):
 		http.Error(w, "Films not found", http.StatusNotFound)
+	case errors.Is(err, domain.ErrInvalidMoviesRange):
+		http.Error(w, "expected 1 <= from <= to", http.StatusBadRequest)
 	default:
 		http.Error(w, "Movie service request failed", http.StatusBadGateway)
 	}

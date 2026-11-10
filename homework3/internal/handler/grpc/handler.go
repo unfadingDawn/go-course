@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
 	moviepb "homework3/api/proto"
-	"homework3/internal/client"
-	"homework3/internal/model"
+	"homework3/internal/domain"
+	"homework3/internal/usecase"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,14 +16,15 @@ import (
 
 type Handler struct {
 	moviepb.UnimplementedMovieServiceServer
-	client *client.MovieClient
+	usecase          usecase.MovieUseCase
+	operationTimeout time.Duration
 }
 
-func NewHandler(c *client.MovieClient) *Handler {
-	return &Handler{client: c}
+func NewHandler(uc usecase.MovieUseCase, operationTimeout time.Duration) *Handler {
+	return &Handler{usecase: uc, operationTimeout: operationTimeout}
 }
 
-func toProtoMovie(m model.Movie) *moviepb.Movie {
+func toProtoMovie(m domain.Movie) *moviepb.Movie {
 	return &moviepb.Movie{
 		Id:       int64(m.ID),
 		Title:    m.Title,
@@ -37,12 +39,9 @@ func (h *Handler) LoadMovies(
 ) (*moviepb.LoadMoviesResponse, error) {
 	from := req.GetFrom()
 	to := req.GetTo()
-	if from < 1 || to < from {
-		return nil, status.Error(codes.InvalidArgument, "expected 1 <= from <= to")
-	}
-	ctx, cancel := context.WithTimeout(ctx, h.client.OperationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, h.operationTimeout)
 	defer cancel()
-	result, err := h.client.LoadMovies(ctx, from, to)
+	result, err := h.usecase.LoadMovies(ctx, int(from), int(to))
 	if err != nil {
 		log.Printf("gRPC LoadMovies: from=%d to=%d: %v", from, to, err)
 		return nil, toStatusError(err)
@@ -63,9 +62,9 @@ func (h *Handler) GetLastMovie(
 	ctx context.Context,
 	_ *moviepb.GetLastMovieRequest,
 ) (*moviepb.Movie, error) {
-	ctx, cancel := context.WithTimeout(ctx, h.client.OperationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, h.operationTimeout)
 	defer cancel()
-	movie, err := h.client.GetLastMovie(ctx)
+	movie, err := h.usecase.GetLastMovie(ctx)
 	if err != nil {
 		log.Printf("gRPC GetLastMovie: %v", err)
 		return nil, toStatusError(err)
@@ -79,8 +78,10 @@ func toStatusError(err error) error {
 		return status.Error(codes.Canceled, "Operation canceled")
 	case errors.Is(err, context.DeadlineExceeded):
 		return status.Error(codes.DeadlineExceeded, "Deadline exceeded")
-	case errors.Is(err, client.ErrNoMovies):
+	case errors.Is(err, domain.ErrNoMovies):
 		return status.Error(codes.NotFound, "Films not found")
+	case errors.Is(err, domain.ErrInvalidMoviesRange):
+		return status.Error(codes.InvalidArgument, "expected 1 <= from <= to")
 	default:
 		return status.Error(codes.Unavailable, "Service is unavailable")
 	}
