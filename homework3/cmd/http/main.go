@@ -1,9 +1,10 @@
 package main
 
 import (
-	"homework3/internal/client"
+	movieadapter "homework3/internal/adapter/movie"
 	"homework3/internal/config"
-	moviehttp "homework3/internal/transport/http"
+	moviehttp "homework3/internal/handler/http"
+	"homework3/internal/usecase"
 	"log"
 	"net/http"
 )
@@ -13,9 +14,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	c := client.NewMovieClient(cfg.MovieBaseURL, cfg.UpstreamTimeout, cfg.OperationTimeout)
+	c := movieadapter.NewMovieClient(cfg.MovieBaseURL, cfg.UpstreamTimeout)
+	uc := usecase.NewMovieService(c)
 
-	r := moviehttp.NewRouter(c)
+	r := moviehttp.NewRouter(uc, cfg.OperationTimeout)
 
 	if err := http.ListenAndServe(cfg.HTTPAddr, r); err != nil {
 		log.Fatalf("HTTP server failed: %v", err)

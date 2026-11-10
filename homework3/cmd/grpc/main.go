@@ -1,9 +1,10 @@
 package main
 
 import (
-	"homework3/internal/client"
+	movieadapter "homework3/internal/adapter/movie"
 	"homework3/internal/config"
-	moviegrpc "homework3/internal/transport/grpc"
+	moviegrpc "homework3/internal/handler/grpc"
+	"homework3/internal/usecase"
 	"log"
 	"net"
 )
@@ -17,8 +18,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c := client.NewMovieClient(cfg.MovieBaseURL, cfg.UpstreamTimeout, cfg.OperationTimeout)
-	grpcHandler := moviegrpc.NewHandler(c)
+	c := movieadapter.NewMovieClient(cfg.MovieBaseURL, cfg.UpstreamTimeout)
+	uc := usecase.NewMovieService(c)
+	grpcHandler := moviegrpc.NewHandler(uc, cfg.OperationTimeout)
 	grpcServer := moviegrpc.NewServer(grpcHandler)
 
 	log.Printf("gRPC server listening on %s", cfg.GrpcAddr)
