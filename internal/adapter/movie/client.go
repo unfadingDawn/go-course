@@ -6,27 +6,28 @@ import (
 	"fmt"
 	"homework3/internal/domain"
 	"net/http"
+	"strings"
 	"time"
 )
 
-type MovieClient struct {
+type Client struct {
 	httpClient      *http.Client
 	BaseURL         string
 	UpstreamTimeout time.Duration
 }
 
 type movieResponse struct {
-	ID       int    `json:"id"`
 	Title    string `json:"title"`
 	Director string `json:"director"`
+	ID       int    `json:"id"`
 	Year     int    `json:"year"`
 }
 
-func NewMovieClient(baseURL string, upstreamTimeout time.Duration) *MovieClient {
-	return &MovieClient{&http.Client{}, baseURL, upstreamTimeout}
+func NewMovieClient(baseURL string, upstreamTimeout time.Duration) *Client {
+	return &Client{&http.Client{}, strings.TrimRight(baseURL, "/"), upstreamTimeout}
 }
 
-func (c *MovieClient) GetMovie(ctx context.Context, id int) (domain.Movie, error) {
+func (c *Client) GetMovie(ctx context.Context, id int) (domain.Movie, error) {
 	url := fmt.Sprintf("%s/%d/info.0.json", c.BaseURL, id)
 	ctx, cancel := context.WithTimeout(ctx, c.UpstreamTimeout)
 	defer cancel()
