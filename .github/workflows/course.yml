@@ -1,14 +1,8 @@
-name: Homework 3 acceptance tests
+name: Homework 5 acceptance tests
 
 on:
   push:
-    paths:
-      - "homework3/**"
-      - ".github/workflows/course.yml"
   pull_request:
-    paths:
-      - "homework3/**"
-      - ".github/workflows/course.yml"
   workflow_dispatch:
 
 permissions:
@@ -18,7 +12,7 @@ jobs:
   grade:
     uses: vacmannnn/go-courses/.github/workflows/grade.yml@main
     with:
-      task: "3"
-      solution-dir: homework3
+      task: "5"
+      solution-dir: "."
       package-dir: cmd/http
       tests-ref: main
