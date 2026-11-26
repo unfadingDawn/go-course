@@ -3,18 +3,24 @@ package app
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
-	movieadapter "homework3/internal/adapter/movie"
-	"homework3/internal/adapter/postgres"
-	"homework3/internal/config"
-	"homework3/internal/database"
-	"homework3/internal/usecase"
 	"log"
+
+	"github.com/redis/go-redis/v9"
+	movieadapter "github.com/unfadingdawn/go-course/internal/adapter/movie"
+	"github.com/unfadingdawn/go-course/internal/adapter/postgres"
+	redisadapter "github.com/unfadingdawn/go-course/internal/adapter/redis"
+	"github.com/unfadingdawn/go-course/internal/config"
+	"github.com/unfadingdawn/go-course/internal/database"
+	"github.com/unfadingdawn/go-course/internal/usecase"
 )
 
 type App struct {
 	Movies *usecase.MovieService
+	Search *usecase.SearchService
 	db     *sql.DB
+	redis  *redis.Client
 }
 
 func New(ctx context.Context, cfg *config.Config) (*App, error) {
@@ -26,15 +32,33 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	}
 	repository := postgres.NewMovieRepository(db)
 	client := movieadapter.NewMovieClient(cfg.MovieBaseURL, cfg.UpstreamTimeout)
+	redisClient := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+	redisCtx, cancel := context.WithTimeout(ctx, cfg.OperationTimeout)
+	err = redisClient.Ping(redisCtx).Err()
+	cancel()
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("connect to Redis: %w", err), redisClient.Close(), db.Close())
+	}
 	log.Print("Synchronizing movies with upstream")
 	if err := usecase.NewMovieSynchronizer(client, repository).Sync(ctx); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("synchronize movies: %w", err)
+		return nil, errors.Join(fmt.Errorf("synchronize movies: %w", err), redisClient.Close(), db.Close())
 	}
 	log.Print("Movie synchronization complete")
-	return &App{Movies: usecase.NewMovieService(repository), db: db}, nil
+	log.Print("Building movie index")
+	index := redisadapter.NewMovieIndex(redisClient)
+	if err := usecase.NewMovieIndexBuilder(repository, index).Build(ctx); err != nil {
+		return nil, errors.Join(fmt.Errorf("build movie index: %w", err), redisClient.Close(), db.Close())
+	}
+	log.Print("Movie index complete")
+	cache := redisadapter.NewSearchCache(redisClient)
+	return &App{
+		Movies: usecase.NewMovieService(repository),
+		Search: usecase.NewSearchService(repository, index, cache),
+		db:     db,
+		redis:  redisClient,
+	}, nil
 }
 
 func (a *App) Close() error {
-	return a.db.Close()
+	return errors.Join(a.db.Close(), a.redis.Close())
 }

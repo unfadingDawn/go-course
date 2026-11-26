@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"homework3/internal/domain"
+
+	"github.com/unfadingdawn/go-course/internal/domain"
 )
 
 type SyncRepository interface {

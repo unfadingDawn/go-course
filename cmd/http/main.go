@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"homework3/internal/app"
-	"homework3/internal/config"
-	moviegrpc "homework3/internal/handler/grpc"
-	moviehttp "homework3/internal/handler/http"
 	"log"
 	"net"
 	"net/http"
 	"os/signal"
 	"syscall"
+
+	"github.com/unfadingdawn/go-course/internal/app"
+	"github.com/unfadingdawn/go-course/internal/config"
+	moviegrpc "github.com/unfadingdawn/go-course/internal/handler/grpc"
+	moviehttp "github.com/unfadingdawn/go-course/internal/handler/http"
 
 	"google.golang.org/grpc"
 )
@@ -37,7 +38,7 @@ func run() error {
 	defer application.Close()
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           moviehttp.NewRouter(application.Movies, cfg.OperationTimeout),
+		Handler:           moviehttp.NewRouter(application.Movies, application.Search, cfg.OperationTimeout),
 		ReadHeaderTimeout: cfg.OperationTimeout,
 	}
 	defer server.Close()

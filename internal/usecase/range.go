@@ -3,8 +3,9 @@ package usecase
 import (
 	"context"
 	"errors"
-	"homework3/internal/domain"
 	"log"
+
+	"github.com/unfadingdawn/go-course/internal/domain"
 )
 
 func (s *MovieService) LoadMovies(ctx context.Context, from, to int) (domain.LoadMoviesResult, error) {

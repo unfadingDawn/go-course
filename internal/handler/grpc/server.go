@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	moviepb "homework3/api/proto"
+	moviepb "github.com/unfadingdawn/go-course/api/proto"
 
 	"google.golang.org/grpc"
 

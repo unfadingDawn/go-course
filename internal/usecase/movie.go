@@ -2,7 +2,8 @@ package usecase
 
 import (
 	"context"
-	"homework3/internal/domain"
+
+	"github.com/unfadingdawn/go-course/internal/domain"
 )
 
 type MovieProvider interface {

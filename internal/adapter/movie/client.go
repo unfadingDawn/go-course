@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"homework3/internal/domain"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/unfadingdawn/go-course/internal/domain"
 )
 
 type Client struct {

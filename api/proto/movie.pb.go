@@ -74,10 +74,9 @@ func (x *LoadMoviesRequest) GetTo() int64 {
 }
 
 type LoadMoviesResponse struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Movies []*Movie               `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty"`
-	// Individual failures do not fail the RPC. Check this field even on OK.
-	Errors        []*MovieLoadError `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Movies        []*Movie               `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty"`
+	Errors        []*MovieLoadError      `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -127,11 +126,10 @@ func (x *LoadMoviesResponse) GetErrors() []*MovieLoadError {
 }
 
 type MovieLoadError struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// unavailable or deadline_exceeded (an individual upstream timeout).
-	Code          string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	Message       string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -315,7 +313,7 @@ const file_api_proto_movie_proto_rawDesc = "" +
 	"\fMovieService\x12A\n" +
 	"\n" +
 	"LoadMovies\x12\x18.movie.LoadMoviesRequest\x1a\x19.movie.LoadMoviesResponse\x128\n" +
-	"\fGetLastMovie\x12\x1a.movie.GetLastMovieRequest\x1a\f.movie.MovieB\x1dZ\x1bhomework3/api/proto;moviepbb\x06proto3"
+	"\fGetLastMovie\x12\x1a.movie.GetLastMovieRequest\x1a\f.movie.MovieB5Z3github.com/unfadingdawn/go-course/api/proto;moviepbb\x06proto3"
 
 var (
 	file_api_proto_movie_proto_rawDescOnce sync.Once

@@ -13,6 +13,7 @@ type Config struct {
 	MovieBaseURL     string
 	HTTPAddr         string
 	GrpcAddr         string
+	RedisAddr        string
 	DatabaseURL      string
 	UpstreamTimeout  time.Duration
 	OperationTimeout time.Duration
@@ -31,6 +32,11 @@ func Load() (*Config, error) {
 	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
 	if databaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")
+	}
+
+	redisAddr := strings.TrimSpace(os.Getenv("REDIS_ADDR"))
+	if redisAddr == "" {
+		return nil, fmt.Errorf("REDIS_ADDR is required")
 	}
 
 	upstreamTimeout, err := time.ParseDuration(envOrDefault("UPSTREAM_TIMEOUT", "5s"))
@@ -53,6 +59,7 @@ func Load() (*Config, error) {
 		MovieBaseURL:     envOrDefault("MOVIE_BASE_URL", "https://homeworksite.site"),
 		HTTPAddr:         envOrDefault("HTTP_ADDR", ":8080"),
 		GrpcAddr:         envOrDefault("GRPC_ADDR", ":9090"),
+		RedisAddr:        redisAddr,
 		DatabaseURL:      databaseURL,
 		UpstreamTimeout:  upstreamTimeout,
 		OperationTimeout: operationTimeout,

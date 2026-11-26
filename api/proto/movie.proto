@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package movie;
 
-option go_package = "homework3/api/proto;moviepb";
+option go_package = "github.com/unfadingdawn/go-course/api/proto;moviepb";
 
 service MovieService {
     rpc LoadMovies(LoadMoviesRequest) returns (LoadMoviesResponse);

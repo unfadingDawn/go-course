@@ -5,7 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"homework3/internal/domain"
+
+	"github.com/unfadingdawn/go-course/internal/domain"
 )
 
 type MovieRepository struct {
@@ -40,6 +41,54 @@ func (r *MovieRepository) GetLastMovie(ctx context.Context) (domain.Movie, error
 		return domain.Movie{}, fmt.Errorf("get last movie: %w", err)
 	}
 	return movie, nil
+}
+
+func (r *MovieRepository) GetAllMovies(ctx context.Context) ([]domain.Movie, error) {
+	rows, err := r.db.QueryContext(ctx, "SELECT id, title, year, director FROM movies")
+	if err != nil {
+		return nil, fmt.Errorf("get all movies: %w", err)
+	}
+	defer rows.Close()
+
+	movies, err := scanMovies(rows)
+	if err != nil {
+		return nil, fmt.Errorf("get all movies: %w", err)
+	}
+	return movies, nil
+}
+
+func (r *MovieRepository) GetMoviesByIDs(ctx context.Context, ids []int) ([]domain.Movie, error) {
+	if len(ids) == 0 {
+		return []domain.Movie{}, nil
+	}
+
+	rows, err := r.db.QueryContext(ctx,
+		"SELECT id, title, year, director FROM movies WHERE id = ANY($1::bigint[])", ids)
+	if err != nil {
+		return nil, fmt.Errorf("get movies by IDs: %w", err)
+	}
+	defer rows.Close()
+
+	movies, err := scanMovies(rows)
+	if err != nil {
+		return nil, fmt.Errorf("get movies by IDs: %w", err)
+	}
+	return movies, nil
+}
+
+func scanMovies(rows *sql.Rows) ([]domain.Movie, error) {
+	movies := make([]domain.Movie, 0)
+	for rows.Next() {
+		var movie domain.Movie
+		if err := rows.Scan(&movie.ID, &movie.Title, &movie.Year, &movie.Director); err != nil {
+			return nil, fmt.Errorf("read movie: %w", err)
+		}
+		movies = append(movies, movie)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read movies: %w", err)
+	}
+	return movies, nil
 }
 
 func (r *MovieRepository) ExistingIDs(ctx context.Context, lastID int) (map[int]bool, error) {

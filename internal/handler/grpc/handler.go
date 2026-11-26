@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	moviepb "homework3/api/proto"
-	"homework3/internal/domain"
-	"homework3/internal/usecase"
+	moviepb "github.com/unfadingdawn/go-course/api/proto"
+	"github.com/unfadingdawn/go-course/internal/domain"
+	"github.com/unfadingdawn/go-course/internal/usecase"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

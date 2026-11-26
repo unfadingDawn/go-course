@@ -4,21 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"homework3/internal/domain"
-	"homework3/internal/usecase"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/unfadingdawn/go-course/internal/domain"
+	"github.com/unfadingdawn/go-course/internal/usecase"
 )
 
 type Handler struct {
 	usecase          usecase.MovieUseCase
+	search           usecase.SearchUseCase
 	operationTimeout time.Duration
 }
 
-func NewHandler(uc usecase.MovieUseCase, operationTimeout time.Duration) *Handler {
-	return &Handler{usecase: uc, operationTimeout: operationTimeout}
+func NewHandler(uc usecase.MovieUseCase, search usecase.SearchUseCase, operationTimeout time.Duration) *Handler {
+	return &Handler{usecase: uc, search: search, operationTimeout: operationTimeout}
 }
 
 func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
